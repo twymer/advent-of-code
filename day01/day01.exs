@@ -1,8 +1,8 @@
-defmodule Day1 do
+defmodule Day01 do
   # STAR 1
 
   def star1() do
-    {:ok, contents} = File.read("day1.txt")
+    {:ok, contents} = File.read("day01.txt")
 
     contents
     |> String.split("\n", trim: true)
@@ -20,7 +20,7 @@ defmodule Day1 do
   # STAR 2
 
   def star2() do
-    {:ok, contents} = File.read("day1.txt")
+    {:ok, contents} = File.read("day01.txt")
 
     numbers = contents
     |> String.split("\n", trim: true)
@@ -44,5 +44,5 @@ defmodule Day1 do
   end
 end
 
-# Day1.star1()
-Day1.star2()
+# Day01.star1()
+Day01.star2()

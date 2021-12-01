@@ -40,9 +40,21 @@ defmodule Day01 do
       end
     end)
     |> IO.inspect
+  end
 
+  def star2_refactor() do
+    {:ok, contents} = File.read("day01.txt")
+
+    numbers = contents
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn row -> String.to_integer(row) end)
+    |> Enum.chunk_every(3, 1, :discard)
+    |> Enum.map(fn triplet -> Enum.sum(triplet) end)
+    |> Enum.chunk_every(2, 1, :discard)
+    |> Enum.count(fn [left, right] -> right > left end)
+    |> IO.inspect
   end
 end
 
 # Day01.star1()
-Day01.star2()
+Day01.star2_refactor()

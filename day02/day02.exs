@@ -19,6 +19,9 @@ defmodule Day02 do
       end
     end)
     |> IO.inspect
+    |> Map.values
+    |> Enum.product
+    |> IO.inspect
   end
 
   # STAR 2
@@ -41,11 +44,12 @@ defmodule Day02 do
       end
     end)
     |> IO.inspect
+    |> Map.drop([:aim])
+    |> Map.values
+    |> Enum.product
+    |> IO.inspect
   end
 end
 
-# result = Day02.star1()
-# IO.inspect(result.horizontal * result.depth)
-
-result = Day02.star2()
-IO.inspect(result.horizontal * result.depth)
+# Day02.star1()
+Day02.star2()

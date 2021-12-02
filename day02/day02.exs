@@ -50,13 +50,13 @@ defmodule Day02 do
     |> IO.inspect
   end
 
-  def drive("up", angle, acc) do
+  def drive(["up", angle], acc) do
     %{aim: acc.aim - angle, horizontal: acc.horizontal, depth: acc.depth}
   end
-  def drive("down", angle, acc) do
+  def drive(["down", angle], acc) do
     %{aim: acc.aim + angle, horizontal: acc.horizontal, depth: acc.depth}
   end
-  def drive("forward", distance, acc) do
+  def drive(["forward", distance], acc) do
     %{aim: acc.aim, horizontal: acc.horizontal + distance, depth: acc.depth + acc.aim * distance}
   end
 
@@ -67,7 +67,7 @@ defmodule Day02 do
     |> String.split("\n", trim: true)
     |> Enum.map(fn row -> String.split(row) end)
     |> Enum.map(fn [command, distance] -> [command, String.to_integer(distance)] end)
-    |> Enum.reduce(%{aim: 0, horizontal: 0, depth: 0}, fn [command, distance], acc -> drive(command, distance, acc) end)
+    |> Enum.reduce(%{aim: 0, horizontal: 0, depth: 0}, &drive/2)
     |> IO.inspect
     |> Map.drop([:aim])
     |> Map.values

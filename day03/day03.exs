@@ -29,83 +29,52 @@ defmodule Day03 do
 
   # STAR 2
 
-  def oxygen(base_numbers) do
-    base_numbers
-    |> Enum.map(fn line -> String.split(line, "", trim: true) end)
-    |> Enum.zip
-    |> Enum.map(fn column -> Tuple.to_list(column) end)
-    |> Enum.map(fn column -> Enum.frequencies(column) end)
-    |> Enum.reduce_while(%{numbers: base_numbers, position: 0}, fn _, acc ->
-      counts = acc.numbers
-      |> Enum.map(fn number -> String.at(number, acc.position) end)
-      |> Enum.frequencies
-
-      digit = if Map.get(counts, "1") >= Map.get(counts, "0") do
-        "1"
-      else
-        "0"
-      end
-
-      result_numbers = acc.numbers
-      |> Enum.filter(fn number ->
-        String.at(number, acc.position) === digit
-      end)
-
-      if Enum.count(result_numbers) === 1 do
-        {:halt, %{numbers: result_numbers, position: acc.position}}
-      else
-        {:cont, %{numbers: result_numbers, position: acc.position + 1}}
-      end
-    end)
-    |> Map.get(:numbers)
-    |> Enum.at(0)
+  def compare(left, right, calculation_type) do
+    case calculation_type do
+      :oxygen -> left > right
+      :co2 -> left <= right
+    end
   end
 
-  def co2(base_numbers) do
-    base_numbers
+  def compute(numbers, position, calculation_type) do
+    filter_digit = numbers
     |> Enum.map(fn line -> String.split(line, "", trim: true) end)
-    |> Enum.zip
-    |> Enum.map(fn column -> Tuple.to_list(column) end)
-    |> Enum.map(fn column -> Enum.frequencies(column) end)
-    |> Enum.reduce_while(%{numbers: base_numbers, position: 0}, fn _, acc ->
-      counts = acc.numbers
-      |> Enum.map(fn number -> String.at(number, acc.position) end)
-      |> Enum.frequencies
-
-      digit = if Map.get(counts, "1") >= Map.get(counts, "0") do
-        "0"
-      else
-        "1"
-      end
-
-      result_numbers = acc.numbers
-      |> Enum.filter(fn number ->
-        String.at(number, acc.position) === digit
-      end)
-
-      if Enum.count(result_numbers) === 1 do
-        {:halt, %{numbers: result_numbers, position: acc.position}}
-      else
-        {:cont, %{numbers: result_numbers, position: acc.position + 1}}
-      end
-    end)
-    |> Map.get(:numbers)
+    |> Enum.zip()
+    |> Enum.map(&Tuple.to_list(&1))
+    |> Enum.at(position)
+    |> Enum.frequencies()
+    |> Map.to_list()
+    |> Enum.map(&Tuple.to_list(&1))
+    |> Enum.sort(&(compare(Enum.at(&1, 1), Enum.at(&2, 1), calculation_type)))
     |> Enum.at(0)
+    |> Enum.at(0)
+
+    matches = numbers
+    |> Enum.filter(fn number ->
+      String.at(number, position) === filter_digit
+    end)
+
+    if Enum.count(matches) === 1 do
+      Enum.at(matches, 0)
+    else
+      compute(matches, position + 1, calculation_type)
+    end
   end
 
   def star2() do
-    base_numbers = File.read!("../day03/day03.txt")
-    |> String.split("\n", trim: true)
+    numbers =
+      File.read!("../day03/day03.txt")
+      |> String.split("\n", trim: true)
 
-    o = oxygen(base_numbers)
-    |> IO.inspect
+    oxygen = compute(numbers, 0, :oxygen)
+    |> IO.inspect()
     |> String.to_integer(2)
 
-    c = co2(base_numbers)
-    |> IO.inspect
+    co2 = compute(numbers, 0, :co2)
+    |> IO.inspect()
     |> String.to_integer(2)
 
-    o * c
+    oxygen * co2
     |> IO.inspect
   end
 end

@@ -29,7 +29,7 @@ defmodule Day05 do
     end
   end
 
-  def star1() do
+  def star2() do
     parse_file()
     |> Enum.reduce([], fn vent, acc ->
       acc ++ coordinates_hit_for_vent(vent)
@@ -40,4 +40,4 @@ defmodule Day05 do
   end
 end
 
-Day05.star1()
+Day05.star2()

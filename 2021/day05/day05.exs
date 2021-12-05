@@ -14,9 +14,7 @@ defmodule Day05 do
 
   end
 
-  def coordinates_hit_for_vent(line) do
-    [start_point, end_point] = line
-
+  def coordinates_hit_for_vent([start_point, end_point]) do
     cond do
       start_point.x === end_point.x ->
         Enum.map(start_point.y..end_point.y, fn y -> {start_point.x, y} end)

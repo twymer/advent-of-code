@@ -21,8 +21,9 @@ defmodule Day05 do
       start_point.y === end_point.y ->
         Enum.map(start_point.x..end_point.x, fn x -> {x, start_point.y} end)
       true ->
-        # This was required for star 2, it's the only change but
-        # I haven't updated code to leave separate paths (yet?)
+        # Adding this line instead of returning an empty array was the only
+        # change to make star 2 pass. I just didn't (yet?) refactor the
+        # code to still have a path for star 1.
         Enum.zip(start_point.x..end_point.x, start_point.y..end_point.y)
     end
   end

@@ -15,9 +15,6 @@ defmodule Day05 do
   end
 
   def coordinates_hit_for_vent(pair) do
-    pair
-    |> Enum.sort
-
     [one, two] = pair
 
     cond do

@@ -14,18 +14,18 @@ defmodule Day05 do
 
   end
 
-  def coordinates_hit_for_vent(pair) do
-    [one, two] = pair
+  def coordinates_hit_for_vent(line) do
+    [start_point, end_point] = line
 
     cond do
-      one.x === two.x ->
-        Enum.map(one.y..two.y, fn y -> {one.x, y} end)
-      one.y === two.y ->
-        Enum.map(one.x..two.x, fn x -> {x, one.y} end)
+      start_point.x === end_point.x ->
+        Enum.map(start_point.y..end_point.y, fn y -> {start_point.x, y} end)
+      start_point.y === end_point.y ->
+        Enum.map(start_point.x..end_point.x, fn x -> {x, start_point.y} end)
       true ->
         # This was required for star 2, it's the only change but
         # I haven't updated code to leave separate paths (yet?)
-        Enum.zip(one.x..two.x, one.y..two.y)
+        Enum.zip(start_point.x..end_point.x, start_point.y..end_point.y)
     end
   end
 

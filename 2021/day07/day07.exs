@@ -38,7 +38,9 @@ defmodule Day07 do
 
     Enum.reduce(min..max, %{best_position: nil, best_cost: :infinity}, fn trial_position, acc ->
       fuel_cost = Enum.reduce(input, 0, fn crab_position, acc ->
-        acc + calculate_fuel(crab_position, trial_position)
+        distance = Kernel.abs(crab_position - trial_position)
+        cost = distance * (distance + 1) / 2
+        acc + cost
       end)
 
       if fuel_cost < acc.best_cost do

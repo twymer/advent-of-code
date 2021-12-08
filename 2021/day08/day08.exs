@@ -15,28 +15,19 @@ defmodule Day08 do
     |> IO.inspect
   end
 
-  def map_for_digits(inputs) do
+  def build_digit_to_signal_map(inputs) do
     # Order matters here, since some need to be discovered first
-    numbers = [1, 4, 7, 8, 0, 6, 2, 3, 5, 9]
-
-    numbers
+    [1, 4, 7, 8, 0, 6, 2, 3, 5, 9]
     |> Enum.reduce(%{}, fn number, acc ->
       signals =
         case number do
-          1 ->
-            inputs
-            |> Enum.find(&(Enum.count(&1) === 2))
-          4 ->
-            inputs
-            |> Enum.find(&(Enum.count(&1) === 4))
-          7 ->
-            inputs
-            |> Enum.find(&(Enum.count(&1) === 3))
-          8 ->
-            inputs
-            |> Enum.find(&(Enum.count(&1) === 7))
+          1 -> inputs |> Enum.find(&(Enum.count(&1) === 2))
+          4 -> inputs |> Enum.find(&(Enum.count(&1) === 4))
+          7 -> inputs |> Enum.find(&(Enum.count(&1) === 3))
+          8 -> inputs |> Enum.find(&(Enum.count(&1) === 7))
+
           0 ->
-            # Six elements, and has 3 pieces from the signal for 4 and all of 7
+            # Six elements, and has 3 bits from the signal for 4 and all of 7
             inputs
             |> Enum.find(fn signal ->
               Enum.count(signal) === 6 &&
@@ -51,16 +42,17 @@ defmodule Day08 do
                 Enum.count(acc[6] -- signal) === 2 &&
                 Enum.count(acc[1] -- signal) === 1
             end)
-          5 ->
-            inputs
-            |> Enum.find(fn signal ->
-              Enum.count(signal) === 5 && Enum.count(acc[6] -- signal) === 1
-            end)
           3 ->
             # Five elements and contains all of the signal for 1
             inputs
             |> Enum.find(fn signal ->
               Enum.count(signal) === 5 && Enum.count(acc[1] -- signal) === 0
+            end)
+          5 ->
+            # Signal for 6, missing 1
+            inputs
+            |> Enum.find(fn signal ->
+              Enum.count(signal) === 5 && Enum.count(acc[6] -- signal) === 1
             end)
           6 ->
             # Six elements and contains only one from the signal for 1
@@ -88,13 +80,10 @@ defmodule Day08 do
       |> String.split("|")
       |> Enum.map(&String.split/1)
 
-    inputs =
-      inputs
-      |> Enum.map(&(String.split(&1, "", trim: true)))
-
     decoder =
       inputs
-      |> map_for_digits
+      |> Enum.map(&(String.split(&1, "", trim: true)))
+      |> build_digit_to_signal_map
       |> Map.new(fn {k, v} ->
         {
           v
@@ -122,13 +111,8 @@ defmodule Day08 do
     File.read!("day08.txt")
     |> String.split("\n", trim: true)
     |> Enum.map(&calculate_row_value/1)
-    |> IO.inspect
     |> Enum.sum
     |> IO.inspect
-  end
-
-  def all do
-    @all_signals
   end
 end
 

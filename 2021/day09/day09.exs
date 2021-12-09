@@ -1,64 +1,41 @@
 defmodule Day09 do
   def load_file do
-    File.read!("day09.txt")
+    grid = File.read!("day09.txt")
     |> String.split("\n", trim: true)
     |> Enum.map(&(String.split(&1, "", trim: true)))
     |> Enum.map(&(Enum.map(&1, fn n -> String.to_integer(n) end)))
-  end
 
-  # ******
-  # STAR 1
-  # ******
-
-  def get_low_points(grid) do
-    Enum.reduce(0..Enum.count(grid) - 1, [], fn j, acc ->
-      Enum.reduce(0..Enum.count(Enum.at(grid, 0)) - 1, acc, fn i, acc ->
-        position =
+    # Storing things in a map with [x, y] keys seemed easier for the rest of
+    # the problem. After getting this passing I'm not convinced it's "better"
+    # but it definitely cleans some things up.
+    Enum.reduce(0..(Enum.count(grid) - 1), %{}, fn j, acc ->
+      Enum.reduce(0..(Enum.count(Enum.at(grid, 0)) - 1), acc, fn i, acc ->
+        Map.put(
+          acc,
+          [i, j],
           grid
           |> Enum.at(j)
           |> Enum.at(i)
-
-        min_adjacent =
-          [[i-1, j], [i+1, j], [i, j-1], [i,j+1]]
-          |> Enum.reduce(:infinity, fn [x, y], acc ->
-            value_at = if x < 0 or y < 0 do
-              :infinity
-            else
-              # Really hacky way to handle accessors out of bounds...
-              grid
-              |> Enum.at(y, [])
-              |> Enum.at(x, :infinity)
-            end
-
-            Enum.min([value_at, acc])
-          end)
-
-        if position < min_adjacent do
-          acc ++ [[i, j]]
-        else
-          acc
-        end
+        )
       end)
     end)
   end
 
-  def star1() do
-    grid = load_file()
+  def get_low_points(grid) do
+    Enum.reduce(grid, [], fn {[i, j], center_value}, acc ->
+      min_adjacent =
+        [[i-1, j], [i+1, j], [i, j-1], [i,j+1]]
+        |> Enum.reduce(:infinity, fn [x, y], acc ->
+          Enum.min([Map.get(grid, [x, y], :infinity), acc])
+        end)
 
-    get_low_points(grid)
-    |> Enum.map(fn [x, y] ->
-      grid
-      |> Enum.at(y)
-      |> Enum.at(x)
+      if center_value < min_adjacent do
+        acc ++ [[i, j]]
+      else
+        acc
+      end
     end)
-    |> Enum.map(&(&1 + 1))
-    |> Enum.sum
-    |> IO.inspect
   end
-
-  # ******
-  # STAR 2
-  # ******
 
   def find_valley(grid, [x, y]) do
     # NOTE: there's a better way to handle default arguments but was having
@@ -91,13 +68,10 @@ defmodule Day09 do
   def valley_adjacents(grid, [x, y]) do
     [[x-1, y], [x+1, y], [x, y-1], [x,y+1]]
     |> Enum.reduce([], fn [new_x, new_y], acc ->
-      # Hacky way to get a default position that's just a barrier (a 9)
-      value_at_new_position =
-        grid
-        |> Enum.at(new_y, [])
-        |> Enum.at(new_x, 9)
+      # Treat anything we can't find as a barrier
+      value_at_new_position = Map.get(grid, [new_x, new_y], 9)
 
-      if new_x >= 0 and new_y >= 0 and value_at_new_position !== 9 do
+      if value_at_new_position !== 9 do
         acc ++ [[new_x, new_y]]
       else
         acc
@@ -116,7 +90,6 @@ defmodule Day09 do
     |> Enum.sort
     |> Enum.reverse
     |> Enum.take(3)
-    |> IO.inspect
     |> Enum.product
     |> IO.inspect
   end

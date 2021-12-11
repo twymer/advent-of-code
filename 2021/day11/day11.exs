@@ -63,21 +63,17 @@ defmodule Day11 do
   end
 
   def simulate_step(grid) do
-    grid = Enum.reduce(grid, grid, fn {octopus, _}, acc ->
+    grid
+    |> Enum.reduce(grid, fn {octopus, _}, acc ->
       increase_octopus_energy(acc, octopus)
     end)
-
-    super_bright_moment = Enum.count(grid, fn {_k, v} -> v > 9 end) === @board_height * @board_width
-
-    grid = Enum.reduce(grid, grid, fn {octopus, energy}, acc ->
+    |> Enum.reduce(grid, fn {octopus, energy}, acc ->
       if energy > 9 do
         Map.put(acc, octopus, 0)
       else
         Map.put(acc, octopus, energy)
       end
     end)
-
-    [grid, super_bright_moment]
   end
 
   def star2 do
@@ -85,9 +81,14 @@ defmodule Day11 do
 
     Stream.iterate(1, &(&1 + 1))
     |> Enum.reduce_while(initial_grid, fn current_step, acc ->
-      [grid, super_bright_moment] = simulate_step(acc)
+      grid = simulate_step(acc)
 
-      if super_bright_moment do
+      flashed_count =
+        grid
+        |> Map.values
+        |> Enum.count(&(&1 === 0))
+
+      if flashed_count === @board_width * @board_height do
         {:halt, current_step}
       else
         {:cont, grid}

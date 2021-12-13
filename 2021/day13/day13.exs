@@ -18,20 +18,22 @@ defmodule Day13 do
     }
   end
 
+  def max_pos(dots, :x) do
+    dots
+    |> Enum.map(&(&1 |> Enum.at(0)))
+    |> Enum.max
+  end
+
+  def max_pos(dots, :y) do
+    dots
+    |> Enum.map(&(&1 |> Enum.at(1)))
+    |> Enum.max
+  end
+
   def print_grid(dots) do
-    max_x =
-      dots
-      |> Enum.map(&(&1 |> Enum.at(0)))
-      |> Enum.max
-
-    max_y =
-      dots
-      |> Enum.map(&(&1 |> Enum.at(1)))
-      |> Enum.max
-
     IO.puts("")
-    Enum.each(0..max_y, fn j ->
-      Enum.reduce(0..max_x, [], fn i, acc ->
+    Enum.each(0..max_pos(dots, :y), fn j ->
+      Enum.reduce(0..max_pos(dots, :x), [], fn i, acc ->
         acc ++
           if MapSet.member?(dots, [i, j]) do
             ["#"]
@@ -47,63 +49,31 @@ defmodule Day13 do
     dots
   end
 
-  def max_pos(dots, :x) do
-    dots
-    |> Enum.map(&(&1 |> Enum.at(0)))
-    |> Enum.max
-  end
-
-  def max_pos(dots, :y) do
-    dots
-    |> Enum.map(&(&1 |> Enum.at(1)))
-    |> Enum.max
-  end
-
-  # TODO These are very not DRY, need to refactor to be able to do the
-  # fold in a single function (or, at very least, only have minor logic
-  # that isn't in a shared function here..)
   def fold(dots, "x", fold_line) do
-    Enum.reduce(1..fold_line, MapSet.new(), fn offset, acc ->
-      0..max_pos(dots, :y)
-      |> Enum.reduce(MapSet.new(), fn y, acc ->
-        acc =
-          if MapSet.member?(dots, [fold_line - offset, y]) do
-            MapSet.put(acc, [fold_line - offset, y])
-          else
-            acc
-          end
-
-        if MapSet.member?(dots, [fold_line + offset, y]) do
-          MapSet.put(acc, [fold_line - offset, y])
-        else
+    dots
+    |> Enum.reduce(MapSet.new(), fn [x, y], acc ->
+      cond do
+        x < fold_line ->
+          MapSet.put(acc, [x, y])
+        x > fold_line ->
+          MapSet.put(acc, [fold_line - (x - fold_line), y])
+        true ->
           acc
-        end
-      end)
-      |> MapSet.union(acc)
+      end
     end)
   end
 
-  # TODO These are very not DRY, need to refactor to be able to do the
-  # fold in a single function (or, at very least, only have minor logic
-  # that isn't in a shared function here..)
   def fold(dots, "y", fold_line) do
-    Enum.reduce(1..fold_line, MapSet.new(), fn offset, acc ->
-      0..max_pos(dots, :x)
-      |> Enum.reduce(MapSet.new(), fn x, acc ->
-        acc =
-          if MapSet.member?(dots, [x, fold_line - offset]) do
-            MapSet.put(acc, [x, fold_line - offset])
-          else
-            acc
-          end
-
-        if MapSet.member?(dots, [x, fold_line + offset]) do
-          MapSet.put(acc, [x, fold_line - offset])
-        else
+    dots
+    |> Enum.reduce(MapSet.new(), fn [x, y], acc ->
+      cond do
+        y < fold_line ->
+          MapSet.put(acc, [x, y])
+        y > fold_line ->
+          MapSet.put(acc, [x, fold_line - (y - fold_line)])
+        true ->
           acc
-        end
-      end)
-      |> MapSet.union(acc)
+      end
     end)
   end
 

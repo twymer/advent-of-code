@@ -79,11 +79,7 @@ defmodule Day16 do
       |> Enum.slice(6..-1)
       |> then(&(process_packet(version, type, &1)))
     else
-      %{
-        version_total: 0,
-        values: [],
-        remaining_transmission: []
-      }
+      %{ version_total: 0, values: [], remaining_transmission: [] }
     end
   end
 
@@ -91,7 +87,6 @@ defmodule Day16 do
   ### Literal value
   def process_packet(version, 4, transmission) do
     literal = read_literal(transmission)
-
     length = Enum.count(literal) + div(Enum.count(literal), 4)
 
     %{
@@ -104,52 +99,50 @@ defmodule Day16 do
   ### Version *, type *
   ### Operator value types
   def process_packet(version, type, transmission) do
-    length_type = List.first(transmission)
-
-    if length_type === "0" do
-      length =
-        transmission
-        |> Enum.slice(1, 15)
-        |> to_int
-
-      {current_chunk, remaining} =
-        transmission
-        |> Enum.slice(16..-1)
-        |> Enum.split(length)
-
-      nested_results =
-        current_chunk
-        |> process_transmission_chunk
-
+    List.first(transmission)
+    |> parse_subpackets(transmission)
+    |> then(fn subpacket_results ->
       %{
-        version_total: version + nested_results.version_total,
-        values: nested_results.values,
-        remaining_transmission: remaining
-      }
-    else
-      count =
-        transmission
-        |> Enum.slice(1, 11)
-        |> to_int
-
-      nested_results =
-        transmission
-        |> Enum.slice(12..-1)
-        |> process_transmission_count(count)
-
-      %{
-        version_total: version + nested_results.version_total,
-        values: nested_results.values,
-        remaining_transmission: nested_results.remaining_transmission
-      }
-    end
-    |> then(fn results ->
-      %{
-        version_total: results.version_total,
-        values: [do_operation(type, results.values)],
-        remaining_transmission: results.remaining_transmission
+        version_total: version + subpacket_results.version_total,
+        values: [do_operation(type, subpacket_results.values)],
+        remaining_transmission: subpacket_results.remaining_transmission
       }
     end)
+  end
+
+  ### Length in bits length type ID
+  def parse_subpackets("0", transmission) do
+    length =
+      transmission
+      |> Enum.slice(1, 15)
+      |> to_int
+
+    {current_chunk, remaining} =
+      transmission
+      |> Enum.slice(16..-1)
+      |> Enum.split(length)
+
+    nested_results =
+      current_chunk
+      |> process_transmission_chunk
+
+    %{
+      version_total: nested_results.version_total,
+      values: nested_results.values,
+      remaining_transmission: remaining
+    }
+  end
+
+  ### Length in subpackets length type ID
+  def parse_subpackets("1", transmission) do
+    count =
+      transmission
+      |> Enum.slice(1, 11)
+      |> to_int
+
+    transmission
+    |> Enum.slice(12..-1)
+    |> process_transmission_count(count)
   end
 
   def read_literal(transmission) do

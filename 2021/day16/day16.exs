@@ -14,56 +14,15 @@ defmodule Day16 do
     |> String.split("", trim: true)
   end
 
+  # Convert list of binary bits to an int
   def to_int(bits) do
     bits
     |> Enum.join("")
     |> String.to_integer(2)
   end
 
-  def convert_hex([]), do: ""
-  def convert_hex(<<head, rest::binary>>) do
-    head
-    |> Integer.to_string(2)
-    |> then(&(&1 <> convert_hex(rest)))
-  end
-
-  def process_transmission_chunk([]) do
-    %{remaining_transmission: [], values: [], version_total: 0}
-  end
-  def process_transmission_chunk(transmission) do
-    next_result = transmission
-    |> start_next_packet
-
-    remaining_result =
-      next_result.remaining_transmission
-      |> process_transmission_chunk
-
-    %{
-      version_total: next_result.version_total + remaining_result.version_total,
-      values: next_result.values ++ remaining_result.values,
-      remaining_transmission: remaining_result.remaining_transmission
-    }
-  end
-
-  def process_transmission_count(remaining, 0) do
-    %{remaining_transmission: remaining, values: [], version_total: 0}
-  end
-  def process_transmission_count(transmission, count) do
-    next_result = transmission
-    |> start_next_packet
-
-    remaining_result =
-      next_result.remaining_transmission
-      |> process_transmission_count(count - 1)
-
-    %{
-      version_total: next_result.version_total + remaining_result.version_total,
-      values: next_result.values ++ remaining_result.values,
-      remaining_transmission: remaining_result.remaining_transmission
-    }
-  end
-
-  def start_next_packet(transmission) do
+  # Process just the next packet in a transmission stream
+  def process_next_packet(transmission) do
     unless Enum.all?(transmission, &(&1 === "0")) do
       version =
         transmission
@@ -77,15 +36,15 @@ defmodule Day16 do
 
       transmission
       |> Enum.slice(6..-1)
-      |> then(&(process_packet(version, type, &1)))
+      |> then(&(process_packet_data(version, type, &1)))
     else
       %{ version_total: 0, values: [], remaining_transmission: [] }
     end
   end
 
-  ### Version *, type 4
-  ### Literal value
-  def process_packet(version, 4, transmission) do
+  # Literal value
+  # Version *, type 4
+  def process_packet_data(version, 4, transmission) do
     literal = read_literal(transmission)
     length = Enum.count(literal) + div(Enum.count(literal), 4)
 
@@ -96,11 +55,11 @@ defmodule Day16 do
     }
   end
 
-  ### Version *, type *
-  ### Operator value types
-  def process_packet(version, type, transmission) do
+  # All operator value types
+  # Version *, type *
+  def process_packet_data(version, type, transmission) do
     List.first(transmission)
-    |> parse_subpackets(transmission)
+    |> process_subpackets(transmission)
     |> then(fn subpacket_results ->
       %{
         version_total: version + subpacket_results.version_total,
@@ -110,8 +69,46 @@ defmodule Day16 do
     end)
   end
 
-  ### Length in bits length type ID
-  def parse_subpackets("0", transmission) do
+  # Process all transmission data in a given chunk
+  def process_transmission_chunk([]) do
+    %{remaining_transmission: [], values: [], version_total: 0}
+  end
+  def process_transmission_chunk(transmission) do
+    next_result = transmission
+    |> process_next_packet
+
+    remaining_result =
+      next_result.remaining_transmission
+      |> process_transmission_chunk
+
+    %{
+      version_total: next_result.version_total + remaining_result.version_total,
+      values: next_result.values ++ remaining_result.values,
+      remaining_transmission: remaining_result.remaining_transmission
+    }
+  end
+
+  # Process the specified number of bits in the chunk (and return remainder)
+  def process_transmission_count(remaining, 0) do
+    %{remaining_transmission: remaining, values: [], version_total: 0}
+  end
+  def process_transmission_count(transmission, count) do
+    next_result = transmission
+    |> process_next_packet
+
+    remaining_result =
+      next_result.remaining_transmission
+      |> process_transmission_count(count - 1)
+
+    %{
+      version_total: next_result.version_total + remaining_result.version_total,
+      values: next_result.values ++ remaining_result.values,
+      remaining_transmission: remaining_result.remaining_transmission
+    }
+  end
+
+  # Length type: Length of subpackets in bits
+  def process_subpackets("0", transmission) do
     length =
       transmission
       |> Enum.slice(1, 15)
@@ -133,8 +130,8 @@ defmodule Day16 do
     }
   end
 
-  ### Length in subpackets length type ID
-  def parse_subpackets("1", transmission) do
+  # Length type: Number of subpackets
+  def process_subpackets("1", transmission) do
     count =
       transmission
       |> Enum.slice(1, 11)
@@ -145,6 +142,8 @@ defmodule Day16 do
     |> process_transmission_count(count)
   end
 
+  # Read all bits in the transmission that apply to this literal and
+  # return its combined binary value
   def read_literal(transmission) do
     {value_data, remaining_transmission} = Enum.split(transmission, 5)
     [continue_bit | raw_value] = value_data
@@ -156,6 +155,7 @@ defmodule Day16 do
     end
   end
 
+  # Execute operation type on values (from processing subpackets)
   def do_operation(0, values), do: Enum.sum(values)
   def do_operation(1, values), do: Enum.product(values)
   def do_operation(2, values), do: Enum.min(values)
@@ -166,14 +166,14 @@ defmodule Day16 do
 
   def star1 do
     load_file()
-    |> start_next_packet
+    |> process_next_packet
     |> Map.get(:version_total)
     |> IO.inspect
   end
 
   def star2 do
     load_file()
-    |> start_next_packet
+    |> process_next_packet
     |> Map.get(:values)
     |> List.first
     |> IO.inspect

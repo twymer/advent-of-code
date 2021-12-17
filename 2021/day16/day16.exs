@@ -11,7 +11,6 @@ defmodule Day16 do
       |> String.pad_leading(4, "0")
     end)
     |> Enum.join("")
-    |> IO.inspect
     |> String.split("", trim: true)
   end
 
@@ -28,27 +27,40 @@ defmodule Day16 do
     |> then(&(&1 <> convert_hex(rest)))
   end
 
-  def process_transmission_chunk([]), do: nil
+  def process_transmission_chunk([]), do: %{remaining_transmission: [], version_total: 0}
   def process_transmission_chunk(transmission) do
-    transmission
+    next_result = transmission
     |> start_next_packet
-    |> process_transmission_chunk
+
+    remaining_result =
+      next_result.remaining_transmission
+      |> process_transmission_chunk
+
+    %{
+      version_total: next_result.version_total + remaining_result.version_total,
+      remaining_transmission: remaining_result.remaining_transmission
+    }
   end
 
-  def process_transmission_count([], 0), do: nil
+  def process_transmission_count(remaining, 0) do
+    %{remaining_transmission: remaining, version_total: 0}
+  end
   def process_transmission_count(transmission, count) do
-    transmission
+    next_result = transmission
     |> start_next_packet
-    |> process_transmission_count(count - 1)
+
+    remaining_result =
+      next_result.remaining_transmission
+      |> process_transmission_count(count - 1)
+
+    %{
+      version_total: next_result.version_total + remaining_result.version_total,
+      remaining_transmission: remaining_result.remaining_transmission
+    }
   end
 
   def start_next_packet(transmission) do
-    IO.puts "starting"
-    transmission
-    |> Enum.join("")
-    |> IO.puts
-
-    if Enum.all?(transmission, &(&1 === "0")) do
+    unless Enum.all?(transmission, &(&1 === "0")) do
       version =
         transmission
         |> Enum.slice(0, 3)
@@ -59,43 +71,42 @@ defmodule Day16 do
         |> Enum.slice(3, 3)
         |> to_int
 
-      # require IEx; IEx.pry
-
       transmission
       |> Enum.slice(6..-1)
       |> then(&(process_packet(version, type, &1)))
     else
-      IO.puts "FIN"
+      %{
+        version_total: 0,
+        remaining_transmission: []
+      }
     end
   end
 
   ### Version *, type 4
   ### Literal value
-  def process_packet(_, 4, transmission) do
-    IO.puts "literal"
+  def process_packet(version, 4, transmission) do
+    # IO.puts "Literal"
+    # transmission
+    # |> Enum.join("")
+    # |> IO.inspect
 
     literal = read_literal(transmission)
-    literal
-    |> Enum.join("")
-    |> IO.inspect
 
     length = Enum.count(literal) + div(Enum.count(literal), 4)
 
-    Enum.slice(transmission, length..-1)
-
-    # Padded to multiple of 4, clear dead space
-    # TODO shouldn't need to add length here
-    # {_, remaining_transmission} = Enum.split(transmission, length + padding(length, 4))
-    # remaining_transmission
+    %{
+      version_total: version,
+      remaining_transmission: Enum.slice(transmission, length..-1)
+    }
   end
 
   ### Version *, type *
   ### Operator value types
-  def process_packet(_, _, transmission) do
-    IO.puts "Operator"
-    transmission
-    |> Enum.join("")
-    |> IO.inspect
+  def process_packet(version, _, transmission) do
+    # IO.puts "Operator"
+    # transmission
+    # |> Enum.join("")
+    # |> IO.inspect
 
     length_type = List.first(transmission)
 
@@ -110,16 +121,29 @@ defmodule Day16 do
         |> Enum.slice(16..-1)
         |> Enum.split(length)
 
-      current_chunk
-      |> Enum.slice(16..length)
-      |> process_transmission_chunk
+      nested_results =
+        current_chunk
+        |> process_transmission_chunk
 
-      remaining
+      %{
+        version_total: version + nested_results.version_total,
+        remaining_transmission: remaining
+      }
     else
-      count = Enum.slice(transmission, 1, 11)
-      transmission
-      |> Enum.slice(12..-1)
-      |> process_transmission_count(count)
+      count =
+        transmission
+        |> Enum.slice(1, 11)
+        |> to_int
+
+      nested_results =
+        transmission
+        |> Enum.slice(12..-1)
+        |> process_transmission_count(count)
+
+      %{
+        version_total: version + nested_results.version_total,
+        remaining_transmission: nested_results.remaining_transmission
+      }
     end
   end
 

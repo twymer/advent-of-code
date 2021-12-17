@@ -101,17 +101,6 @@ defmodule Day16 do
     }
   end
 
-  def read_literal(transmission) do
-    {value_data, remaining_transmission} = Enum.split(transmission, 5)
-    [continue_bit | raw_value] = value_data
-
-    if continue_bit === "1" do
-      raw_value ++ read_literal(remaining_transmission)
-    else
-      raw_value
-    end
-  end
-
   ### Version *, type *
   ### Operator value types
   def process_packet(version, type, transmission) do
@@ -163,13 +152,24 @@ defmodule Day16 do
     end)
   end
 
+  def read_literal(transmission) do
+    {value_data, remaining_transmission} = Enum.split(transmission, 5)
+    [continue_bit | raw_value] = value_data
+
+    if continue_bit === "1" do
+      raw_value ++ read_literal(remaining_transmission)
+    else
+      raw_value
+    end
+  end
+
   def do_operation(0, values), do: Enum.sum(values)
   def do_operation(1, values), do: Enum.product(values)
   def do_operation(2, values), do: Enum.min(values)
   def do_operation(3, values), do: Enum.max(values)
-  def do_operation(5, values), do: if Enum.at(values, 0) > Enum.at(values, 1), do: 1, else: 0
-  def do_operation(6, values), do: if Enum.at(values, 0) < Enum.at(values, 1), do: 1, else: 0
-  def do_operation(7, values), do: if Enum.at(values, 0) == Enum.at(values, 1), do: 1, else: 0
+  def do_operation(5, [left, right]), do: if left > right, do: 1, else: 0
+  def do_operation(6, [left, right]), do: if left < right, do: 1, else: 0
+  def do_operation(7, [left, right]), do: if left == right, do: 1, else: 0
 
   def star1 do
     load_file()

@@ -27,7 +27,9 @@ defmodule Day16 do
     |> then(&(&1 <> convert_hex(rest)))
   end
 
-  def process_transmission_chunk([]), do: %{remaining_transmission: [], version_total: 0}
+  def process_transmission_chunk([]) do
+    %{remaining_transmission: [], values: [], version_total: 0}
+  end
   def process_transmission_chunk(transmission) do
     next_result = transmission
     |> start_next_packet
@@ -38,12 +40,13 @@ defmodule Day16 do
 
     %{
       version_total: next_result.version_total + remaining_result.version_total,
+      values: next_result.values ++ remaining_result.values,
       remaining_transmission: remaining_result.remaining_transmission
     }
   end
 
   def process_transmission_count(remaining, 0) do
-    %{remaining_transmission: remaining, version_total: 0}
+    %{remaining_transmission: remaining, values: [], version_total: 0}
   end
   def process_transmission_count(transmission, count) do
     next_result = transmission
@@ -55,6 +58,7 @@ defmodule Day16 do
 
     %{
       version_total: next_result.version_total + remaining_result.version_total,
+      values: next_result.values ++ remaining_result.values,
       remaining_transmission: remaining_result.remaining_transmission
     }
   end
@@ -77,6 +81,7 @@ defmodule Day16 do
     else
       %{
         version_total: 0,
+        values: [],
         remaining_transmission: []
       }
     end
@@ -85,29 +90,31 @@ defmodule Day16 do
   ### Version *, type 4
   ### Literal value
   def process_packet(version, 4, transmission) do
-    # IO.puts "Literal"
-    # transmission
-    # |> Enum.join("")
-    # |> IO.inspect
-
     literal = read_literal(transmission)
 
     length = Enum.count(literal) + div(Enum.count(literal), 4)
 
     %{
       version_total: version,
+      values: [to_int(literal)],
       remaining_transmission: Enum.slice(transmission, length..-1)
     }
   end
 
+  def read_literal(transmission) do
+    {value_data, remaining_transmission} = Enum.split(transmission, 5)
+    [continue_bit | raw_value] = value_data
+
+    if continue_bit === "1" do
+      raw_value ++ read_literal(remaining_transmission)
+    else
+      raw_value
+    end
+  end
+
   ### Version *, type *
   ### Operator value types
-  def process_packet(version, _, transmission) do
-    # IO.puts "Operator"
-    # transmission
-    # |> Enum.join("")
-    # |> IO.inspect
-
+  def process_packet(version, type, transmission) do
     length_type = List.first(transmission)
 
     if length_type === "0" do
@@ -127,6 +134,7 @@ defmodule Day16 do
 
       %{
         version_total: version + nested_results.version_total,
+        values: nested_results.values,
         remaining_transmission: remaining
       }
     else
@@ -142,31 +150,42 @@ defmodule Day16 do
 
       %{
         version_total: version + nested_results.version_total,
+        values: nested_results.values,
         remaining_transmission: nested_results.remaining_transmission
       }
     end
+    |> then(fn results ->
+      %{
+        version_total: results.version_total,
+        values: [do_operation(type, results.values)],
+        remaining_transmission: results.remaining_transmission
+      }
+    end)
   end
 
-  def padding(actual, interval) do
-    (interval + (actual - rem(interval, actual))) - actual
-  end
-
-  def read_literal(transmission) do
-    {value_data, remaining_transmission} = Enum.split(transmission, 5)
-    [continue_bit | raw_value] = value_data
-
-    if continue_bit === "1" do
-      raw_value ++ read_literal(remaining_transmission)
-    else
-      raw_value
-    end
-  end
+  def do_operation(0, values), do: Enum.sum(values)
+  def do_operation(1, values), do: Enum.product(values)
+  def do_operation(2, values), do: Enum.min(values)
+  def do_operation(3, values), do: Enum.max(values)
+  def do_operation(5, values), do: if Enum.at(values, 0) > Enum.at(values, 1), do: 1, else: 0
+  def do_operation(6, values), do: if Enum.at(values, 0) < Enum.at(values, 1), do: 1, else: 0
+  def do_operation(7, values), do: if Enum.at(values, 0) == Enum.at(values, 1), do: 1, else: 0
 
   def star1 do
     load_file()
     |> start_next_packet
+    |> Map.get(:version_total)
+    |> IO.inspect
+  end
+
+  def star2 do
+    load_file()
+    |> start_next_packet
+    |> Map.get(:values)
+    |> List.first
     |> IO.inspect
   end
 end
 
-Day16.star1()
+# Day16.star1()
+Day16.star2()

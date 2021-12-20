@@ -58,12 +58,14 @@ defmodule Day20 do
       file
       |> Enum.at(0)
       |> String.split("", trim: true)
+      |> Enum.with_index
+      |> Enum.map(fn {k, v} -> {v, k} end)
+      |> Map.new
 
     grid =
       file
       |> Enum.slice(1..-1)
       |> Enum.map(&(String.split(&1, "", trim: true)))
-      # |> IO.inspect
 
     input_image =
       Enum.reduce(0..(Enum.count(grid) - 1), %{}, fn j, acc ->
@@ -77,7 +79,6 @@ defmodule Day20 do
           )
         end)
       end)
-      # |> IO.inspect
 
     {input_image, enhancement_algo}
   end
@@ -95,13 +96,7 @@ defmodule Day20 do
     end)
     |> Enum.join
     |> String.to_integer(2)
-
-#     if Enum.at(enhancement_algo, foo) === "#" do
-#       IO.puts "pixel #{foo}"
-#     end
-
-    foo
-    |> then(&(Enum.at(enhancement_algo, &1)))
+    |> then(&(Map.get(enhancement_algo, &1)))
   end
 
   def enhance(input_image, enhancement_algo) do

@@ -14,6 +14,9 @@ defmodule Day22 do
         end
       end)
     end)
+    |> Enum.reject(fn [_, _ | values] ->
+      Enum.any?(values, &(&1 > 50 || &1 < -50))
+    end)
     |> Enum.map(fn [_, command, x_min, x_max, y_min, y_max, z_min, z_max] ->
       %{
         command: command,

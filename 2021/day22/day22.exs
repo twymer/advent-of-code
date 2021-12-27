@@ -14,9 +14,6 @@ defmodule Day22 do
         end
       end)
     end)
-    |> Enum.reject(fn [_, _ | values] ->
-      Enum.any?(values, &(&1 > 50 || &1 < -50))
-    end)
     |> Enum.map(fn [_, command, x_min, x_max, y_min, y_max, z_min, z_max] ->
       {
         command,
@@ -36,8 +33,10 @@ defmodule Day22 do
     shards = []
 
     # Extending right
-    {shard, splitter} = if base.x_max in splitter.x_min..splitter.x_max do
+    {shard, splitter} = if base.x_max in splitter.x_min+1..splitter.x_max-1 do
       IO.puts "right"
+      IO.inspect base
+      IO.inspect splitter
       {
         %{
           x_min: base.x_max,
@@ -62,7 +61,7 @@ defmodule Day22 do
     shards = shards ++ [shard]
 
     # Extending left
-    {shard, splitter} = if base.x_min in splitter.x_min..splitter.x_max do
+    {shard, splitter} = if base.x_min in splitter.x_min+1..splitter.x_max-1 do
       IO.puts "left"
       {
         %{
@@ -89,7 +88,7 @@ defmodule Day22 do
     shards = shards ++ [shard]
 
     # Extending down
-    {shard, splitter} = if base.y_max in splitter.y_min..splitter.y_max do
+    {shard, splitter} = if base.y_max in splitter.y_min+1..splitter.y_max-1 do
       IO.puts "down"
       {
         %{
@@ -115,8 +114,10 @@ defmodule Day22 do
     shards = shards ++ [shard]
 
     # Extending up
-    {shard, splitter} = if base.y_min in splitter.y_min..splitter.y_max do
+    {shard, splitter} = if base.y_min in splitter.y_min+1..splitter.y_max-1 do
       IO.puts "up"
+      IO.inspect base
+      IO.inspect splitter
       {
         %{
           x_min: splitter.x_min,
@@ -141,8 +142,10 @@ defmodule Day22 do
     shards = shards ++ [shard]
 
     # Extending in
-    {shard, splitter} = if base.z_max in splitter.z_min..splitter.z_max do
+    {shard, splitter} = if base.z_max in splitter.z_min+1..splitter.z_max-1 do
       IO.puts "in"
+      IO.inspect base
+      IO.inspect splitter
       {
         %{
           x_min: splitter.x_min,
@@ -167,7 +170,7 @@ defmodule Day22 do
     shards = shards ++ [shard]
 
     # Extending out
-    {shard, splitter} = if base.z_min in splitter.z_min..splitter.z_max do
+    {shard, _splitter} = if base.z_min in splitter.z_min+1..splitter.z_max-1 do
       IO.puts "out"
       {
         %{
@@ -205,29 +208,33 @@ defmodule Day22 do
 
   # TODO LOL at this
   def intersects?(old, new) do
-    new.x_min <= old.x_max &&
-    new.y_min <= old.z_max &&
-    new.z_min <= old.z_max &&
-    new.x_min <= old.x_max &&
-    new.y_min <= old.z_max &&
-    new.z_min <= old.z_max &&
-
-    old.x_min <= new.x_max &&
-    old.y_min <= new.z_max &&
-    old.z_min <= new.z_max &&
-    old.x_min <= new.x_max &&
-    old.y_min <= new.z_max &&
-    old.z_min <= new.z_max
+    (
+      (new.x_max in old.x_min..old.x_max || new.x_min in old.x_min..old.x_max) &&
+      (new.y_max in old.y_min..old.y_max || new.y_min in old.y_min..old.y_max) &&
+      (new.z_max in old.z_min..old.z_max || new.z_min in old.z_min..old.z_max)
+    ) ||
+      (old.x_max in new.x_min..new.x_max || old.x_min in new.x_min..new.x_max) &&
+      (old.y_max in new.y_min..new.y_max || old.y_min in new.y_min..new.y_max) &&
+      (old.z_max in new.z_min..new.z_max || old.z_min in new.z_min..new.z_max)
   end
 
   def process_instruction(cuboids, command, cuboid) do
     new_cuboids =
       Enum.reduce(cuboids, [], fn old_cuboid, acc ->
         intersection_results =
-          # TODO you might not need this..
           if intersects?(old_cuboid, cuboid) do
+            IO.puts ""
+            IO.puts "intersect"
+            old_cuboid |> IO.inspect
+            cuboid |> IO.inspect
+            IO.puts ""
             split_merge(cuboid, old_cuboid)
           else
+            IO.puts ""
+            IO.puts "NON intersect"
+            old_cuboid |> IO.inspect
+            cuboid |> IO.inspect
+            IO.puts ""
             [old_cuboid]
           end
 
@@ -248,8 +255,15 @@ defmodule Day22 do
     |> Enum.reduce([], fn {{command, cuboid}, index}, acc ->
       IO.puts ""
       IO.puts "Step: #{index + 1}"
+      if index == 3 do
+        IO.puts ""
+        cuboid |> IO.inspect
+        acc |> IO.inspect
+        IO.puts ""
+      end
       process_instruction(acc, command, cuboid)
     end)
+    |> IO.inspect
     |> volume
     |> IO.inspect
   end

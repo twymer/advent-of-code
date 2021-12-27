@@ -36,7 +36,7 @@ defmodule Day22 do
     shards = []
 
     # Extending right
-    {shard, splitter} = if splitter.x_min > base.x_min && splitter.x_min < base.x_max && splitter.x_max > base.x_max do
+    {shard, splitter} = if base.x_max in splitter.x_min..splitter.x_max do
       IO.puts "right"
       {
         %{
@@ -62,7 +62,7 @@ defmodule Day22 do
     shards = shards ++ [shard]
 
     # Extending left
-    {shard, splitter} = if splitter.x_max > base.x_min && splitter.x_max < base.x_max && splitter.x_min < base.x_min do
+    {shard, splitter} = if base.x_min in splitter.x_min..splitter.x_max do
       IO.puts "left"
       {
         %{
@@ -89,7 +89,7 @@ defmodule Day22 do
     shards = shards ++ [shard]
 
     # Extending down
-    {shard, splitter} = if splitter.y_min > base.y_min && splitter.y_min < base.y_max && splitter.y_max > base.y_max do
+    {shard, splitter} = if base.y_max in splitter.y_min..splitter.y_max do
       IO.puts "down"
       {
         %{
@@ -115,7 +115,7 @@ defmodule Day22 do
     shards = shards ++ [shard]
 
     # Extending up
-    {shard, splitter} = if splitter.y_max > base.y_min && splitter.y_max < base.y_max && splitter.y_min < base.y_min do
+    {shard, splitter} = if base.y_min in splitter.y_min..splitter.y_max do
       IO.puts "up"
       {
         %{
@@ -141,10 +141,8 @@ defmodule Day22 do
     shards = shards ++ [shard]
 
     # Extending in
-    {shard, splitter} = if splitter.z_min > base.z_min && splitter.z_min < base.z_max && splitter.z_max > base.z_max do
+    {shard, splitter} = if base.z_max in splitter.z_min..splitter.z_max do
       IO.puts "in"
-      base |> IO.inspect
-      splitter |> IO.inspect
       {
         %{
           x_min: splitter.x_min,
@@ -169,7 +167,7 @@ defmodule Day22 do
     shards = shards ++ [shard]
 
     # Extending out
-    {shard, splitter} = if splitter.z_max > base.z_min && splitter.z_max < base.z_max && splitter.z_min < base.z_min do
+    {shard, splitter} = if base.z_min in splitter.z_min..splitter.z_max do
       IO.puts "out"
       {
         %{
@@ -194,10 +192,6 @@ defmodule Day22 do
     end
     shards = shards ++ [shard]
 
-    IO.puts ""
-    IO.puts "final splitter"
-    IO.inspect(splitter)
-
     shards
     |> Enum.filter(&(&1))
   end
@@ -209,17 +203,35 @@ defmodule Day22 do
     end)
   end
 
+  # TODO LOL at this
+  def intersects?(old, new) do
+    new.x_min <= old.x_max &&
+    new.y_min <= old.z_max &&
+    new.z_min <= old.z_max &&
+    new.x_min <= old.x_max &&
+    new.y_min <= old.z_max &&
+    new.z_min <= old.z_max &&
+
+    old.x_min <= new.x_max &&
+    old.y_min <= new.z_max &&
+    old.z_min <= new.z_max &&
+    old.x_min <= new.x_max &&
+    old.y_min <= new.z_max &&
+    old.z_min <= new.z_max
+  end
+
   def process_instruction(cuboids, command, cuboid) do
     new_cuboids =
       Enum.reduce(cuboids, [], fn old_cuboid, acc ->
-        intersection_results = split_merge(cuboid, old_cuboid)
+        intersection_results =
+          # TODO you might not need this..
+          if intersects?(old_cuboid, cuboid) do
+            split_merge(cuboid, old_cuboid)
+          else
+            [old_cuboid]
+          end
 
-        # If there were no intersections, preserve the old one
-        acc = acc ++ if intersection_results == [] do
-          [old_cuboid]
-        else
-          intersection_results
-        end
+        acc ++ intersection_results
       end)
 
     # If it's an on command then we want to add the cuboid itself
@@ -245,35 +257,24 @@ end
 
 Day22.star2()
 
-
-# left = %{x_min: 0, x_max: 4, y_min: 0, y_max: 4}
-# right = %{x_min: 2, x_max: 6, y_min: 2, y_max: 6}
-# 1
-# Day22.split_merge(left, right)
-# Day22.split_merge(right, left)
-
-# 2
-# left = %{x_min: 0, x_max: 2, y_min: 0, y_max: 2}
-# right = %{x_min: 0, x_max: 2, y_min: 1, y_max: 3}
-# Day22.split_merge(left, right)
-# Day22.split_merge(right, left)
-
-# 3
-# left = %{x_min: 0, x_max: 2, y_min: 0, y_max: 2}
-# right = %{x_min: 1, x_max: 3, y_min: 0, y_max: 2}
-# Day22.split_merge(left, right)
-# Day22.split_merge(right, left)
-
-
 # 3d version of 1
 # No changes on Z, so just tests existing code with expanded volumes
 # left = %{x_min: 0, x_max: 4, y_min: 0, y_max: 4, z_min: 0, z_max: 4}
 # right = %{x_min: 2, x_max: 6, y_min: 2, y_max: 6, z_min: 0, z_max: 4}
+# Day22.split_merge(right, left)
+# |> Day22.volume
+# |> IO.inspect
+# Day22.split_merge(left, right)
+# |> Day22.volume
+# |> IO.inspect
 
 # Fully offset cuboids
 # I think 56 is the right answer here..
 # left = %{x_min: 0, x_max: 4, y_min: 0, y_max: 4, z_min: 0, z_max: 4}
 # right = %{x_min: 2, x_max: 6, y_min: 2, y_max: 6, z_min: 2, z_max: 6}
+# Day22.split_merge(left, right)
+# |> Day22.volume
+# |> IO.inspect
 # Day22.split_merge(right, left)
 # |> Day22.volume
 # |> IO.inspect
@@ -281,6 +282,25 @@ Day22.star2()
 # left = %{x_min: 0, x_max: 4, y_min: 0, y_max: 4, z_min: 0, z_max: 1}
 # right = %{x_min: 1, x_max: 3, y_min: 3, y_max: 5, z_min: 0, z_max: 1}
 # # 4
+# Day22.split_merge(right, left)
+# # Day22.split_merge(left, right)
+# |> IO.inspect
+# |> Day22.volume
+# |> IO.inspect
+
+# left = %{x_min: 0, x_max: 4, y_min: 0, y_max: 4, z_min: 0, z_max: 1}
+# right = %{x_min: 5, x_max: 8, y_min: 5, y_max: 8, z_min: 2, z_max: 3}
+# # no intersect
+# Day22.intersects?(left, right)
+# |> IO.inspect
+
+# left = %{x_min: 0, x_max: 4, y_min: 0, y_max: 4, z_min: 0, z_max: 1}
+# right = %{x_min: 1, x_max: 3, y_min: 1, y_max: 3, z_min: 0, z_max: 1}
+# # 5
+# Day22.split_merge(right, left)
+# |> IO.inspect
+# |> Day22.volume
+# |> IO.inspect
 # Day22.split_merge(left, right)
 # |> IO.inspect
 # |> Day22.volume

@@ -1,4 +1,5 @@
 defmodule Day23 do
+  @room_depth 4
   @room_offsets %{a: 2, b: 4, c: 6, d: 8}
   @type_move_costs %{a: 1, b: 10, c: 100, d: 1000}
 
@@ -54,35 +55,20 @@ defmodule Day23 do
   def star2() do
     start_state = %{
       hallway: %{ 0 => nil, 1 => nil, 2 => nil, 3 => nil, 4 => nil, 5 => nil, 6 => nil, 7 => nil, 8 => nil, 9 => nil, 10 => nil },
-      a: [:c, :b],
-      b: [:b, :c],
-      c: [:d, :a],
-      d: [:d, :a]
+      a: [:c, :d, :d, :b],
+      b: [:b, :c, :b, :c],
+      c: [:d, :b, :a, :a],
+      d: [:d, :a, :c, :a]
     }
-    # start_state = %{
-    #   hallway: %{ 0 => nil, 1 => nil, 2 => nil, 3 => nil, 4 => nil, 5 => nil, 6 => nil, 7 => nil, 8 => nil, 9 => nil, 10 => nil },
-    #   a: [:b, :a],
-    #   b: [:a, :b],
-    #   c: [:c, :c],
-    #   d: [:d, :d]
-    # }
-    # start_state = %{
-    #   hallway: %{ 0 => nil, 1 => nil, 2 => nil, 3 => nil, 4 => nil, 5 => nil, 6 => nil, 7 => nil, 8 => nil, 9 => nil, 10 => :d },
-    #   a: [:a, :a],
-    #   b: [:b, :b],
-    #   c: [:c, :c],
-    #   d: [:d]
-    # }
     winner_state = %{
       hallway: %{ 0 => nil, 1 => nil, 2 => nil, 3 => nil, 4 => nil, 5 => nil, 6 => nil, 7 => nil, 8 => nil, 9 => nil, 10 => nil },
-      a: [:a, :a],
-      b: [:b, :b],
-      c: [:c, :c],
-      d: [:d, :d]
+      a: [:a, :a, :a, :a],
+      b: [:b, :b, :b, :b],
+      c: [:c, :c, :c, :c],
+      d: [:d, :d, :d, :d]
     }
 
     Stream.iterate(1, &(&1 + 1))
-    # 0..5
     |> Enum.reduce_while(%{start_state => 0}, fn _, acc ->
       {best, cost} =
         acc
@@ -103,8 +89,6 @@ defmodule Day23 do
             v != nil && legal_room_move?(best, v, k)
           end)
           |> Enum.reduce(acc, fn {mover_position, mover_type}, acc ->
-            # IO.puts "room insertion!"
-            # IO.puts "pos: #{mover_position}, #{mover_type}"
             new_hallway =
               best
               |> Map.get(:hallway)
@@ -112,14 +96,13 @@ defmodule Day23 do
 
             new_room = [mover_type | Map.get(best, mover_type)]
 
-            move_count = abs(mover_position - Map.get(@room_offsets, mover_type)) + (2 - Enum.count(new_room)) + 1
+            move_count = abs(mover_position - Map.get(@room_offsets, mover_type)) + (@room_depth - Enum.count(new_room)) + 1
             new_cost = Map.get(@type_move_costs, mover_type) * move_count + cost
             acc
             |> Map.update(
               best
               |> Map.put(:hallway, new_hallway)
               |> Map.put(mover_type, new_room),
-              # |> IO.inspect,
               new_cost,
               fn v -> Enum.min([new_cost, v]) end
             )
@@ -148,7 +131,7 @@ defmodule Day23 do
                   best
                   |> Map.put(:hallway, new_hallway)
 
-                move_count = abs(legal_hallway_position - Map.get(@room_offsets, room)) + (2 - Enum.count(new_room_contents))
+                move_count = abs(legal_hallway_position - Map.get(@room_offsets, room)) + (@room_depth - Enum.count(new_room_contents))
                 new_cost = Map.get(@type_move_costs, mover) * move_count + cost
 
                 acc
@@ -158,10 +141,6 @@ defmodule Day23 do
               acc
             end
           end)
-
-          # acc
-          # |> Map.keys
-          # |> IO.inspect()
 
           {:cont, acc}
       end

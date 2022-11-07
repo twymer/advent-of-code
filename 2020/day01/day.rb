@@ -2,25 +2,11 @@ def load_file(filename = 'input.txt')
   File.open(filename).readlines.map(&:to_i)
 end
 
-def run_part_1(numbers)
-  numbers.each_with_index do |left, i|
-    numbers[i+1..].each_with_index do |right, j|
-      return left * right if left + right == 2020
-    end
-  end
-end
-
-def run_part_2(numbers)
-  numbers.each_with_index do |left, i|
-    numbers[i+1..].each_with_index do |right, j|
-      numbers[i+j+1..].each_with_index do |middle, k|
-        return left * right * middle if left + right + middle == 2020
-      end
-    end
-  end
+def find_sum_tuple(numbers, size, goal)
+  numbers.combination(size).find { |tuple| tuple.sum == goal }.reduce(&:*)
 end
 
 numbers = load_file
 
-puts run_part_1(numbers)
-puts run_part_2(numbers)
+puts find_sum_tuple(numbers, 2, 2020)
+puts find_sum_tuple(numbers, 3, 2020)

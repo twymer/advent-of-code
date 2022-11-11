@@ -5,17 +5,12 @@ def load_file(filename = 'input.txt')
 end
 
 def walk_forest(slope, forest)
-  count = 0
-  i = 0
-  j = 0
+  forest_width = forest[0].count
+  vertical_steps = (0...forest.count).step(slope[1])
 
-  until j >= forest.count
-    count += 1 if forest[j][slope[0] * i % forest[j].count] == '#'
-    j += slope[1]
-    i += 1
-  end
-
-  count
+  vertical_steps.each_with_index.map do |j, i|
+    forest[j][slope[0] * i % forest_width] == '#' ? 1 : 0
+  end.sum
 end
 
 forest = load_file('input.txt')
@@ -34,7 +29,4 @@ slopes = [
   [1, 2]
 ]
 
-tree_counts = slopes.map do |slope|
-  walk_forest(slope, forest)
-end
-puts tree_counts.reduce(&:*)
+puts slopes.map { |slope| walk_forest(slope, forest) }.reduce(&:*)

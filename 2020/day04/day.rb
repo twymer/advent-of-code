@@ -20,26 +20,20 @@ def load_file(filename = 'input.txt')
 end
 
 def validate_date_field(value, min, max)
-  value && value.length == 4 && value.to_i >= min && value.to_i <= max
+  (min..max).include? value.to_i
 end
 
 def validate_height(height)
-  return false unless height
-
-  value = height[...-2].to_i
-  units = height[-2..]
-
-  if units == 'in'
-    value >= 59 && value <= 76
-  elsif units == 'cm'
-    value >= 150 && value <= 193
-  else
-    false
+  case height
+  when /in$/
+    (59..76).include? height.to_i
+  when /cm$/
+    (150..193).include? height.to_i
   end
 end
 
 def validate_hair_color(color)
-  color && !!(/^#(\d|[a-f]){6}$/.match(color))
+  !!(/^#(\d|[a-f]){6}$/.match(color))
 end
 
 def validate_eye_color(color)
@@ -47,7 +41,7 @@ def validate_eye_color(color)
 end
 
 def validate_pid(pid)
-  pid && !!(/^\d{9}$/.match(pid))
+  !!(/^\d{9}$/.match(pid))
 end
 
 def check_passport(passport)

@@ -1,36 +1,37 @@
+# A = Rock
+# B = Paper
+# C = Scissors
+# X = Loss
+# Y = Draw
+# Z = Win
+
 def load_file(filename = 'input.txt')
   File.open(filename).readlines.map(&:split)
 end
 
 def score_round(round)
-  # A = Rock
-  # B = Paper
-  # C = Scissors
-  # X = Rock
-  # Y = Paper
-  # Z = Scissors
-  result = case round
-           when ['A', 'X']
-             1
-           when ['A', 'Y']
-             2
-           when ['A', 'Z']
-             0
-           when ['B', 'X']
-             0
-           when ['B', 'Y']
-             1
-           when ['B', 'Z']
-             2
-           when ['C', 'X']
-             2
-           when ['C', 'Y']
-             0
-           when ['C', 'Z']
-             1
-           end
+  your_throw = case round
+               when ['A', 'X']
+                 'C'
+               when ['A', 'Y']
+                 'A'
+               when ['A', 'Z']
+                 'B'
+               when ['B', 'X']
+                 'A'
+               when ['B', 'Y']
+                 'B'
+               when ['B', 'Z']
+                 'C'
+               when ['C', 'X']
+                 'B'
+               when ['C', 'Y']
+                 'C'
+               when ['C', 'Z']
+                 'A'
+               end
 
-  result * 3 + ['X', 'Y', 'Z'].index(round[1]) + 1
+  (['A', 'B', 'C'].index(your_throw) + 1) + (3 * (['X', 'Y', 'Z'].index(round[1])))
 end
 
 all_rounds = load_file #('example.txt')

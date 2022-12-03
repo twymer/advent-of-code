@@ -12,11 +12,9 @@ def star_1(ruck_sacks)
 end
 
 def star_2(ruck_sacks)
-  ruck_sacks.each_slice(3).map do |elf_one, elf_two, elf_three|
-    elf_one & elf_two & elf_three
-  end.flatten.reduce(0) { |sum, item|
-    sum + [*'a'..'z', *'A'..'Z'].index(item) + 1
-  }
+  ruck_sacks.each_slice(3).reduce(0) do |sum, elfs|
+    sum + [*'a'..'z', *'A'..'Z'].index(elfs.inject(:&).first) + 1
+  end
 end
 
 ruck_sacks = load_file

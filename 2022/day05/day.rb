@@ -1,19 +1,17 @@
 def load_file(filename = 'input.txt')
   stacks = Hash.new { |h, k| h[k] = [] }
-  instructions = []
 
-  File.open(filename).readlines.each do |line|
-    if line.include? '['
-      crates = line.chars.each_slice(4).map { |x| x.join.delete("[] \n") }
+  file = File.open(filename).read.split("\n\n")
 
-      crates.each_with_index do |crate, i|
-        next if crate.empty?
-        stacks[i + 1] << crate
-      end
-    elsif line.include? 'move'
-      instructions << line.chomp
+  file[0][0...-1].split("\n").map do |line|
+    crates = line.chars.each_slice(4).map { |x| x.join.delete("[] \n") }
+    crates.each_with_index do |crate, i|
+      next if crate.empty?
+      stacks[i + 1] << crate
     end
   end
+
+  instructions = file[1].split("\n")
 
   [stacks, instructions]
 end
